@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/coverage
+.git
+.github
+.env
+backups
+docs
+*.md
+!apps/server/drizzle/**

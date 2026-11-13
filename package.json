@@ -1,0 +1,28 @@
+{
+  "name": "smoker-matchmaker",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "pnpm -r run build",
+    "build:packages": "pnpm --filter \"./packages/*\" run build",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "eslint .",
+    "test": "pnpm run build:packages && pnpm -r run test",
+    "dev": "pnpm run build:packages && pnpm --parallel --filter \"./apps/*\" run dev",
+    "db:generate": "pnpm --filter @sm/server run db:generate",
+    "seed": "pnpm --filter @sm/server run seed",
+    "check": "pnpm lint && pnpm build && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "eslint": "9.39.5",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "globals": "16.5.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.1"
+  }
+}
