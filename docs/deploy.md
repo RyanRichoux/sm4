@@ -9,7 +9,7 @@ The app runs as three containers (app, Postgres, nightly backup) and listens on 
    ```bash
    echo <token> | docker login ghcr.io -u <github-username> --password-stdin
    ```
-3. **On the server**, make a folder with `docker-compose.yml` and a `.env` copied from `.env.example`. Set `GITHUB_OWNER`, a long random `POSTGRES_PASSWORD` (`openssl rand -base64 32`), and the `BOOTSTRAP_*` values for your organization and first admin.
+3. **On the server**, make a folder with `docker-compose.yml` and a `.env` copied from `.env.example`. Set `GITHUB_OWNER`, a long random `POSTGRES_PASSWORD` (`openssl rand -hex 32`), and the `BOOTSTRAP_*` values for your organization and first admin.
 4. **Start it:**
    ```bash
    docker compose up -d
@@ -24,6 +24,17 @@ The app runs as three containers (app, Postgres, nightly backup) and listens on 
 6. If saving anything fails with "Cross-site request blocked", set `ALLOWED_ORIGINS=https://<machine>.<tailnet>.ts.net` in `.env` and run `docker compose up -d` again.
 
 Public viewer links (audience screen, fighter view) arrive in Phase 1 and will be published with `tailscale funnel` on those paths only.
+
+## Troubleshooting
+
+**The app restarts over and over with `Invalid URL`, or the database rejects the password.** Postgres sets its password only the very first time it starts with an empty data volume. Changing `POSTGRES_PASSWORD` in `.env` afterwards does not change the real password. Either set the new one inside the database:
+
+```bash
+docker compose exec db psql -U matchmaker -d matchmaker -c "ALTER USER matchmaker PASSWORD 'the-value-from-.env'"
+docker compose up -d
+```
+
+or, if nothing has been saved yet, start over with an empty database: `docker compose down -v && docker compose up -d` (this deletes all data).
 
 ## Updating
 

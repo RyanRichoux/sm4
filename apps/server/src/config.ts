@@ -4,7 +4,9 @@ const Env = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().min(1).max(65535).default(8080),
   HOST: z.string().default("0.0.0.0"),
-  DATABASE_URL: z.string().min(1, { error: "DATABASE_URL is required." }),
+  /** Either a full URL, or leave unset and use PGHOST/PGUSER/PGPASSWORD/PGDATABASE (any password characters work). */
+  DATABASE_URL: z.string().optional(),
+  PGHOST: z.string().optional(),
   /** Defaults to true in production. Set false only for plain-HTTP local development. */
   COOKIE_SECURE: z.enum(["true", "false"]).optional(),
   SESSION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
@@ -24,7 +26,8 @@ export interface Config {
   nodeEnv: "development" | "test" | "production";
   port: number;
   host: string;
-  databaseUrl: string;
+  /** undefined = connect using the PG* environment variables. */
+  databaseUrl: string | undefined;
   cookieSecure: boolean;
   sessionDays: number;
   trustProxy: boolean;
@@ -43,11 +46,25 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     throw new Error(`Invalid configuration: ${msg}`);
   }
   const e = parsed.data;
+  const databaseUrl = e.DATABASE_URL?.trim() || undefined;
+  if (!databaseUrl && !e.PGHOST) {
+    throw new Error("Invalid configuration: set DATABASE_URL, or PGHOST, PGUSER, PGPASSWORD and PGDATABASE.");
+  }
+  if (databaseUrl) {
+    try {
+      new URL(databaseUrl);
+    } catch {
+      throw new Error(
+        "Invalid configuration: DATABASE_URL isn't a valid address. If the password contains characters such as / + = @ : # ?, " +
+          "either URL-encode them or use PGHOST, PGUSER, PGPASSWORD and PGDATABASE instead of DATABASE_URL.",
+      );
+    }
+  }
   return {
     nodeEnv: e.NODE_ENV,
     port: e.PORT,
     host: e.HOST,
-    databaseUrl: e.DATABASE_URL,
+    databaseUrl,
     cookieSecure: e.COOKIE_SECURE ? e.COOKIE_SECURE === "true" : e.NODE_ENV === "production",
     sessionDays: e.SESSION_DAYS,
     trustProxy: e.TRUST_PROXY === "true",

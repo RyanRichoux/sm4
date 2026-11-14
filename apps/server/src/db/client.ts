@@ -13,8 +13,9 @@ export type DbOrTx = Db | Tx;
 /** apps/server/drizzle — the same relative path from src/db and dist/db. */
 export const MIGRATIONS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../drizzle");
 
-export function createDb(url: string): { db: Db; pool: pg.Pool } {
-  const pool = new pg.Pool({ connectionString: url, max: 10 });
+/** With no URL, node-postgres reads PGHOST, PGPORT, PGUSER, PGPASSWORD and PGDATABASE. */
+export function createDb(url: string | undefined): { db: Db; pool: pg.Pool } {
+  const pool = new pg.Pool(url ? { connectionString: url, max: 10 } : { max: 10 });
   return { db: drizzle(pool, { schema }), pool };
 }
 
